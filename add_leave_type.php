@@ -4,23 +4,39 @@ require_once 'config/db.php';
 
 $message = "";
 
-// Auto-create leave_types table if it doesn't exist
-$conn->query("CREATE TABLE IF NOT EXISTS `leave_types` (
-    `id` INT AUTO_INCREMENT PRIMARY KEY,
-    `type_name` VARCHAR(100) NOT NULL UNIQUE,
-    `description` TEXT,
-    `status` ENUM('Active', 'Deactivated') DEFAULT 'Active'
-)");
-
 if ($_SERVER["REQUEST_METHOD"] == "POST") {
-    $type_name = mysqli_real_escape_string($conn, $_POST['type_name']);
-    $description = mysqli_real_escape_string($conn, $_POST['description']);
+    $type_name = mysqli_real_escape_string($conn, trim($_POST['type_name']));
+    $description = mysqli_real_escape_string($conn, trim($_POST['description']));
+    $max_days = isset($_POST['max_days']) ? intval($_POST['max_days']) : 30;
     
-    $check = $conn->query("SELECT id FROM `leave_types` WHERE `type_name` = '$type_name'");
+    $column_to_use = "type_name"; 
+    $res = $conn->query("SHOW COLUMNS FROM `leave_types` LIKE 'leave_type'");
+    if ($res && $res->num_rows > 0) {
+        $column_to_use = "leave_type";
+    } else {
+        $res2 = $conn->query("SHOW COLUMNS FROM `leave_types` LIKE 'name'");
+        if ($res2 && $res2->num_rows > 0) {
+            $column_to_use = "name";
+        }
+    }
+
+    $check = $conn->query("SELECT * FROM `leave_types` WHERE `$column_to_use` = '$type_name'");
+    
     if ($check && $check->num_rows > 0) {
         $message = "<div class='alert alert-danger shadow-sm'>Error: Leave type already exists!</div>";
     } else {
-        $sql = "INSERT INTO `leave_types` (`type_name`, `description`, `status`) VALUES ('$type_name', '$description', 'Active')";
+        $has_max_days = false;
+        $res3 = $conn->query("SHOW COLUMNS FROM `leave_types` LIKE 'max_days'");
+        if ($res3 && $res3->num_rows > 0) {
+            $has_max_days = true;
+        }
+
+        if ($has_max_days) {
+            $sql = "INSERT INTO `leave_types` (`$column_to_use`, `description`, `max_days`, `status`) VALUES ('$type_name', '$description', '$max_days', 'Active')";
+        } else {
+            $sql = "INSERT INTO `leave_types` (`$column_to_use`, `description`, `status`) VALUES ('$type_name', '$description', 'Active')";
+        }
+        
         if ($conn->query($sql)) {
             $message = "<div class='alert alert-success shadow-sm'>Leave Type added successfully!</div>";
         } else {
@@ -51,7 +67,11 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
                 <form method="POST" action="">
                     <div class="mb-3">
                         <label class="form-label fw-semibold text-secondary">Leave Type Name</label>
-                        <input type="text" name="type_name" class="form-control" placeholder="e.g., Sick Leave, Casual Leave" required>
+                        <input type="text" name="type_name" class="form-control" placeholder="e.g., Maternity Leave" required>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label fw-semibold text-secondary">Maximum Allowed Days</label>
+                        <input type="number" name="max_days" class="form-control" placeholder="e.g., 12" min="1" max="365" required>
                     </div>
                     <div class="mb-4">
                         <label class="form-label fw-semibold text-secondary">Description</label>

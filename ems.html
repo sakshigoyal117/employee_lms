@@ -132,7 +132,7 @@
 </div>
 
 <script>
-    // PRO CHANGE: यूआरएल में ?error=1 आने पर लाल एरर पट्टी दिखाने का क्लीन लॉजिक
+    
     const urlParams = new URLSearchParams(window.location.search);
     if (urlParams.get('error') === '1') {
         document.getElementById('errorBox').classList.remove('d-none');

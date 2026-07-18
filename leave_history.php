@@ -5,16 +5,16 @@ require_once 'config/db.php';
 $emp_id = isset($_SESSION['employee_id']) ? $_SESSION['employee_id'] : 1;
 $filter_status = isset($_GET['status']) ? mysqli_real_escape_string($conn, $_GET['status']) : "";
 
-
 if (isset($_POST['delete_leave'])) {
     $leave_id = mysqli_real_escape_string($conn, $_POST['id']);
     $conn->query("DELETE FROM `leave_applications` WHERE `id` = '$leave_id' AND `employee_id` = '$emp_id' AND `status` = 'Pending'");
-    header("Location: employee_leave_history.php?success=1");
+    header("Location: leave_history.php?success=1");
     exit();
 }
 
-
-$col_duration = 'duration'; $col_start = 'start_date'; $col_end = 'end_date';
+$col_duration = 'duration'; 
+$col_start = 'start_date'; 
+$col_end = 'end_date';
 
 $check_dur = $conn->query("SHOW COLUMNS FROM `leave_applications` WHERE Field IN ('duration', 'num_days', 'days')");
 if ($check_dur && $check_dur->num_rows > 0) { $col_duration = $check_dur->fetch_assoc()['Field']; }

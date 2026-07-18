@@ -2,6 +2,11 @@
 session_start();
 require_once 'config/db.php';
 
+if (!isset($_SESSION['user_role']) || $_SESSION['user_role'] !== 'Admin') {
+    header("Location: ems.html");
+    exit();
+}
+
 $selected_id = "";
 $emp_data = null;
 $message = "";
@@ -27,7 +32,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST['update_employee'])) {
         header("Location: edit_employee.php?id=" . $id . "&success=1");
         exit();
     } else {
-        $message = "<div class='alert alert-danger'>Update Error: " . $conn->error . "</div>";
+        $message = "<div class='alert alert-danger shadow-sm'>Update Error: " . $conn->error . "</div>";
     }
 }
 
@@ -41,15 +46,14 @@ $all_employees = $conn->query("SELECT `id`, `email` FROM `employess` ORDER BY `i
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Edit Employee</title>
+    <title>Edit Employee - Nexus Prime Tech</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <style>
         body { background-color: #f1f5f9; font-family: 'Segoe UI', sans-serif; min-height: 100vh; }
-        .edit-container { max-width: 650px; margin: 50px auto; padding: 35px; background: #ffffff; border: 1px solid #e2e8f0; border-radius: 20px; box-shadow: 0 8px 24px rgba(148, 163, 184, 0.08); }
-        .form-label { font-weight: 600; color: #475569; font-size: 0.9rem; }
+        .edit-container { max-width: 650px; margin: 50px auto; padding: 35px; background: #ffffff; border: 1px solid #e2e8f0; border-radius: 20px; }
+        .form-label { font-weight: 600; color: #475569; }
         .theme-heading { color: #2b44b8; font-weight: 700; }
-        .btn-theme-main { background-color: #2b44b8; color: #ffffff; border: none; }
+        .btn-theme-main { background-color: #2b44b8; color: #ffffff; }
         .btn-theme-main:hover { background-color: #1e3296; color: #ffffff; }
     </style>
 </head>
@@ -57,7 +61,6 @@ $all_employees = $conn->query("SELECT `id`, `email` FROM `employess` ORDER BY `i
     <div class="container">
         <div class="edit-container shadow-sm">
             <h3 class="mb-4 text-center theme-heading">Modify Employee Records</h3>
-            
             <?php echo $message; ?>
             
             <form action="edit_employee.php" method="GET" class="mb-4 border-bottom pb-4">
@@ -81,18 +84,15 @@ $all_employees = $conn->query("SELECT `id`, `email` FROM `employess` ORDER BY `i
             <?php if ($emp_data) { ?>
             <form action="edit_employee.php" method="POST">
                 <input type="hidden" name="id" value="<?php echo $emp_data['id']; ?>">
-                <input type="hidden" name="update_employee" value="1">
                 
                 <div class="mb-3">
                     <label class="form-label">Full Name</label>
                     <input type="text" name="full_name" class="form-control" value="<?php echo htmlspecialchars($emp_data['full_name'] ?? ''); ?>" required>
                 </div>
-
                 <div class="mb-3">
                     <label class="form-label">Email Address</label>
                     <input type="email" name="email" class="form-control" value="<?php echo htmlspecialchars($emp_data['email']); ?>" required>
                 </div>
-
                 <div class="row mb-3">
                     <div class="col-md-6">
                         <label class="form-label">Phone Number</label>
@@ -100,15 +100,17 @@ $all_employees = $conn->query("SELECT `id`, `email` FROM `employess` ORDER BY `i
                     </div>
                     <div class="col-md-6">
                         <label class="form-label">Department</label>
-                        <input type="text" name="department" class="form-control" value="<?php echo htmlspecialchars($emp_data['department'] ?? ''); ?>" required>
+                        <select name="department" class="form-select" required>
+                            <option value="IT Department" <?php echo (isset($emp_data['department']) && $emp_data['department'] == 'IT Department') ? 'selected' : ''; ?>>IT Department</option>
+                            <option value="HR Department" <?php echo (isset($emp_data['department']) && $emp_data['department'] == 'HR Department') ? 'selected' : ''; ?>>HR Department</option>
+                            <option value="Operations" <?php echo (isset($emp_data['department']) && $emp_data['department'] == 'Operations') ? 'selected' : ''; ?>>Operations</option>
+                        </select>
                     </div>
                 </div>
-                
-                <button type="submit" class="btn btn-theme-main w-100 py-2.5 fw-bold rounded-3 mt-2">Update Employee Profile</button>
+                <button type="submit" name="update_employee" class="btn btn-theme-main w-100 py-2.5 fw-bold rounded-3 mt-2">Update Profile</button>
             </form>
             <?php } ?>
-            
-            <a href="admin_dashboard.php" class="btn btn-outline-secondary w-100 mt-3 py-2 fw-semibold rounded-3 text-decoration-none text-center d-block">Back to Dashboard</a>
+            <a href="admin_dashboard.php" class="btn btn-outline-secondary w-100 mt-3 py-2 text-center d-block rounded-3">Back to Dashboard</a>
         </div>
     </div>
 </body>
